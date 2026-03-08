@@ -20,6 +20,11 @@ def main():
     )
     
     st.sidebar.title("☁️ Settings")
+    
+    # AI for Bharat Hackathon Badge
+    st.sidebar.image("https://assets.devfolio.co/hackathons/33827eeeeeac46c8ae31bc086383e0ac/projects/2ba1de1035ac4a5ea65825cf5b3cf556/4ca634de-c8e4-41b1-a20c-03daab3723ef.png", use_column_width=True)
+    st.sidebar.markdown("---")
+    
     st.sidebar.markdown("### AWS Credentials")
     aws_access_key = st.sidebar.text_input("AWS Access Key ID", type="password")
     aws_secret_key = st.sidebar.text_input("AWS Secret Access Key", type="password")
