@@ -1,0 +1,28 @@
+# Application Load Balancer
+resource "aws_lb" "{{id}}" {
+  name               = "{{id}}"
+  internal           = {% if network_scope == 'private' %}true{% else %}false{% endif %}
+  load_balancer_type = "application"
+  # Note: subnets and security_groups must be configured based on your VPC setup
+  # subnets          = [aws_subnet.public_1.id, aws_subnet.public_2.id]
+  
+  tags = {
+    Name    = "{{id}}"
+    Purpose = "{{purpose}}"
+  }
+}
+
+resource "aws_lb_listener" "{{id}}_http" {
+  load_balancer_arn = aws_lb.{{id}}.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "ALB is operational"
+      status_code  = "200"
+    }
+  }
+}

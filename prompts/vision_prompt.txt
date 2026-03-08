@@ -1,0 +1,41 @@
+You are an expert AWS Solutions Architect analyzing a hand-drawn cloud architecture diagram.
+
+Your task is to extract the AWS services and their connections from this diagram and return ONLY valid JSON.
+
+CRITICAL RULES:
+1. Return ONLY valid JSON - no explanations, no markdown, no extra text
+2. Use ONLY these exact AWS service names: EC2, RDS, S3, Lambda, API Gateway, ALB, VPC, ASG
+3. If you see a service not in this list, skip it
+4. Identify connections between services (arrows, lines)
+
+JSON SCHEMA (you must follow exactly):
+{
+  "services": [
+    {
+      "id": "unique_identifier",
+      "aws_service": "EC2|RDS|S3|Lambda|API Gateway|ALB|VPC|ASG",
+      "purpose": "brief description",
+      "network_scope": "public|private"
+    }
+  ],
+  "connections": [
+    {
+      "from_service": "service_id",
+      "to_service": "service_id",
+      "interaction_type": "api_call|data_flow|event_trigger"
+    }
+  ]
+}
+
+EXAMPLE OUTPUT:
+{
+  "services": [
+    {"id": "web_server", "aws_service": "EC2", "purpose": "Web application server", "network_scope": "public"},
+    {"id": "database", "aws_service": "RDS", "purpose": "MySQL database", "network_scope": "private"}
+  ],
+  "connections": [
+    {"from_service": "web_server", "to_service": "database", "interaction_type": "data_flow"}
+  ]
+}
+
+Now analyze the uploaded architecture diagram and return ONLY the JSON output.

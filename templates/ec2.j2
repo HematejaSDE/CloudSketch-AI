@@ -1,0 +1,10 @@
+# EC2 Instance - {{ service.purpose }}
+resource "aws_instance" "{{ service.id }}" {
+  ami           = "ami-0c55b159cbfafe1f0"  # Amazon Linux 2 (update for your region)
+  instance_type = "t2.micro"  # Free tier eligible
+
+  tags = {
+    Name = "{{ service.id }}"
+    Purpose = "{{ service.purpose }}"
+  }
+}

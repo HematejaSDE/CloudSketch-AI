@@ -1,0 +1,20 @@
+# RDS Database - {{ service.purpose }}
+resource "aws_db_instance" "{{ service.id }}" {
+  identifier           = "{{ service.id }}"
+  engine               = "mysql"
+  engine_version       = "8.0"
+  instance_class       = "db.t3.micro"  # Free tier eligible
+  allocated_storage    = 20
+  storage_type         = "gp2"
+  
+  db_name  = "{{ service.id | replace('-', '_') }}"
+  username = "admin"
+  password = "change-me-in-production"  # Use AWS Secrets Manager in production
+  
+  skip_final_snapshot  = true
+
+  tags = {
+    Name = "{{ service.id }}"
+    Purpose = "{{ service.purpose }}"
+  }
+}
