@@ -19,7 +19,41 @@ from .config import (
 def load_vision_prompt() -> str:
     """Load the vision prompt from file"""
     prompt_path = Path(__file__).parent.parent / "prompts" / "vision_prompt.txt"
-    return prompt_path.read_text()
+    return prompt_path.read_text(encoding="utf-8")
+
+
+def detect_media_type(image_file: BinaryIO) -> str:
+    """Detect image media type from attribute or header bytes"""
+    # 1. Check if Streamlit UploadedFile has type attribute
+    content_type = getattr(image_file, "type", None)
+    if content_type in ["image/png", "image/jpeg", "image/webp", "image/gif"]:
+        return content_type
+    
+    # 2. Check filename extension if available
+    name = getattr(image_file, "name", "").lower()
+    if name.endswith((".jpg", ".jpeg")):
+        return "image/jpeg"
+    elif name.endswith(".png"):
+        return "image/png"
+    elif name.endswith(".webp"):
+        return "image/webp"
+    elif name.endswith(".gif"):
+        return "image/gif"
+    
+    # 3. Check header bytes
+    image_file.seek(0)
+    header = image_file.read(12)
+    image_file.seek(0)
+    if header.startswith(b'\x89PNG\r\n\x1a\n'):
+        return "image/png"
+    elif header.startswith(b'\xff\xd8\xff'):
+        return "image/jpeg"
+    elif header.startswith(b'RIFF') and header[8:12] == b'WEBP':
+        return "image/webp"
+    elif header.startswith((b'GIF87a', b'GIF89a')):
+        return "image/gif"
+    
+    return "image/png"
 
 
 def encode_image(image_file: BinaryIO) -> str:
@@ -108,6 +142,9 @@ def analyze_image(image_file: BinaryIO) -> ArchitectureSpec:
     Returns:
         ArchitectureSpec: Validated architecture specification
     """
+    # Detect media type
+    media_type = detect_media_type(image_file)
+    
     # Reset file pointer
     image_file.seek(0)
     
@@ -117,8 +154,10 @@ def analyze_image(image_file: BinaryIO) -> ArchitectureSpec:
     # Load prompt
     prompt = load_vision_prompt()
     
-    # Initialize Bedrock client
-    bedrock = boto3.client('bedrock-runtime', region_name=BEDROCK_REGION)
+    # Initialize Bedrock client with configured region
+    import os
+    region = os.environ.get("AWS_DEFAULT_REGION") or BEDROCK_REGION
+    bedrock = boto3.client('bedrock-runtime', region_name=region)
     
     # Prepare request
     request_body = {
@@ -133,7 +172,7 @@ def analyze_image(image_file: BinaryIO) -> ArchitectureSpec:
                         "type": "image",
                         "source": {
                             "type": "base64",
-                            "media_type": "image/png",
+                            "media_type": media_type,
                             "data": image_base64
                         }
                     },

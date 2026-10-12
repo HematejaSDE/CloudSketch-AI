@@ -25,17 +25,38 @@ def main():
     st.sidebar.image("https://assets.devfolio.co/hackathons/33827eeeeeac46c8ae31bc086383e0ac/projects/2ba1de1035ac4a5ea65825cf5b3cf556/4ca634de-c8e4-41b1-a20c-03daab3723ef.png", use_column_width=True)
     st.sidebar.markdown("---")
     
+    import os
+    
+    # Auto-load credentials from Streamlit Cloud Secrets if available
+    try:
+        if hasattr(st, "secrets"):
+            if "AWS_ACCESS_KEY_ID" in st.secrets and not os.environ.get("AWS_ACCESS_KEY_ID"):
+                os.environ["AWS_ACCESS_KEY_ID"] = str(st.secrets["AWS_ACCESS_KEY_ID"])
+            if "AWS_SECRET_ACCESS_KEY" in st.secrets and not os.environ.get("AWS_SECRET_ACCESS_KEY"):
+                os.environ["AWS_SECRET_ACCESS_KEY"] = str(st.secrets["AWS_SECRET_ACCESS_KEY"])
+            if "AWS_DEFAULT_REGION" in st.secrets and not os.environ.get("AWS_DEFAULT_REGION"):
+                os.environ["AWS_DEFAULT_REGION"] = str(st.secrets["AWS_DEFAULT_REGION"])
+    except Exception:
+        pass
+
     st.sidebar.markdown("### AWS Credentials")
-    aws_access_key = st.sidebar.text_input("AWS Access Key ID", type="password")
-    aws_secret_key = st.sidebar.text_input("AWS Secret Access Key", type="password")
-    aws_region = st.sidebar.selectbox("AWS Region", ["us-east-1", "us-west-2", "eu-central-1", "eu-west-1", "ap-southeast-1", "ap-northeast-1"], index=0)
+    env_has_creds = bool(os.environ.get("AWS_ACCESS_KEY_ID") and os.environ.get("AWS_SECRET_ACCESS_KEY"))
+    if env_has_creds:
+        masked_key = os.environ.get("AWS_ACCESS_KEY_ID", "")[:4] + "••••••••"
+        st.sidebar.success(f"✅ Credentials Active ({masked_key})")
+    
+    default_region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+    region_options = ["us-east-1", "us-west-2", "eu-central-1", "eu-west-1", "ap-southeast-1", "ap-northeast-1"]
+    region_idx = region_options.index(default_region) if default_region in region_options else 0
+    
+    aws_access_key = st.sidebar.text_input("AWS Access Key ID", value=os.environ.get("AWS_ACCESS_KEY_ID", ""), type="password")
+    aws_secret_key = st.sidebar.text_input("AWS Secret Access Key", value=os.environ.get("AWS_SECRET_ACCESS_KEY", ""), type="password")
+    aws_region = st.sidebar.selectbox("AWS Region", region_options, index=region_idx)
     
     if aws_access_key and aws_secret_key:
-        import os
         os.environ["AWS_ACCESS_KEY_ID"] = aws_access_key
         os.environ["AWS_SECRET_ACCESS_KEY"] = aws_secret_key
         os.environ["AWS_DEFAULT_REGION"] = aws_region
-        st.sidebar.success("Credentials loaded for this session!")
         
     st.title("☁️ CloudSketch AI")
     st.markdown("### AI Infrastructure Design Compiler")
@@ -116,7 +137,7 @@ def main():
                                 st.write(f"- **{service.aws_service}** ({service.id}): {service.purpose}")
                         
                         # Generate Terraform
-                        terraform_code = generate_terraform(spec)
+                        terraform_code = generate_terraform(spec, region=aws_region)
                         
                         # Display Terraform code
                         st.code(terraform_code, language="hcl")

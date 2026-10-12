@@ -66,3 +66,19 @@ def test_generate_terraform_unknown_service():
     terraform = generate_terraform(spec)
     # Should not crash, should add TODO comment
     assert "TODO" in terraform or "provider" in terraform
+
+
+def test_generate_terraform_all_supported_services():
+    """Verify all 8 supported AWS services successfully render without TODO errors"""
+    from backend.config import ALLOWED_AWS_SERVICES
+    
+    spec = ArchitectureSpec(
+        services=[
+            Service(id=f"svc_{idx}", aws_service=service_name, purpose=f"Test {service_name}", network_scope="public")
+            for idx, service_name in enumerate(ALLOWED_AWS_SERVICES)
+        ],
+        connections=[]
+    )
+    terraform = generate_terraform(spec)
+    assert "TODO: Template not found" not in terraform
+    assert "provider" in terraform
